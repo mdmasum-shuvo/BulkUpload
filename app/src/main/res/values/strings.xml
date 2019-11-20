@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">BulkUpload</string>
+    <string name="please_wait">Bulk Uploading on Progress..</string>
+</resources>
