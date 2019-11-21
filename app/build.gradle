@@ -23,6 +23,11 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
+ext {
+    appCompatVersion = '1.0.0'
+    designSupportVersion = '1.0.0'
+    recyclerViewVersion = '1.0.0'
+}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
@@ -31,10 +36,18 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    def recyclerview_version = "1.1.0"
 
+    implementation "androidx.recyclerview:recyclerview:$recyclerview_version"
     // Retrofit
     implementation 'com.squareup.retrofit2:retrofit:2.5.0'
+
     implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
     implementation 'com.squareup.okhttp3:logging-interceptor:3.14.1'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.4.0'
+    // RxJava
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.9'
 
+// RxAndroid
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
 }

@@ -27,7 +27,11 @@ import com.masum.bulkupload.encryptdata.MainEncrypt;
 import com.masum.bulkupload.model.insert.Fingerprint;
 import com.masum.bulkupload.model.insert.FingerprintRequest;
 import com.masum.bulkupload.model.response.FpInsertResponse;
+import com.masum.bulkupload.network.ApiInterface;
 import com.masum.bulkupload.network.FPApiUtil;
+
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,6 +41,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.Subject;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -44,9 +53,11 @@ import retrofit2.Response;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "tag";
     private Gson gson = new Gson();
-
+    int count = 0;
     @SuppressWarnings("deprecation")
     private ProgressDialog progressDialog;
+    ApiInterface apiInterface = FPApiUtil.getInterface();
+    ArrayList<FingerprintRequest> fingerprintRequestArrayList = new ArrayList<>();
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
@@ -65,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 File listOfFiles = Environment.getExternalStoragePublicDirectory("finger");
-                showProgressDialog();
+                //showProgressDialog();
                 new ReadFpTask().execute(listOfFiles);
 
 
@@ -73,10 +84,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public class ReadFpTask extends AsyncTask<File, Void, Void> {
+    public class ReadFpTask extends AsyncTask<File, Void, ArrayList<FingerprintRequest>> {
 
         @Override
-        protected Void doInBackground(File... files) {
+        protected ArrayList<FingerprintRequest> doInBackground(File... files) {
 
 
             File[] fpFiles = files[0].listFiles();
@@ -120,36 +131,69 @@ public class MainActivity extends AppCompatActivity {
                         fingerprints.add(fingerprint);
                     }
 
+                    FingerprintRequest fingerprintRequest = new FingerprintRequest();
+                    fingerprintRequest.setUserId(id);
 
-                    uploadFingerToServer(fingerprints, id);
+                    fingerprintRequest.setCreatedById("10");
+                    fingerprintRequest.setFingerprints(fingerprints);
+
+                    fingerprintRequestArrayList.add(fingerprintRequest);
+
 
                 }
 
 
             }
-            return null;
+            return fingerprintRequestArrayList;
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            hideProgressDialog();
+        protected void onPostExecute(ArrayList<FingerprintRequest> requestArrayList) {
+            super.onPostExecute(requestArrayList);
+            for (FingerprintRequest request : requestArrayList) {
+                uploadFingerToServer(request);
+            }
         }
     }
 
-    private void uploadFingerToServer(List<Fingerprint> fingerprints, String id) {
-        FingerprintRequest fingerprintRequest = new FingerprintRequest();
-        fingerprintRequest.setUserId(id);
-
-        fingerprintRequest.setCreatedById("10");
-        fingerprintRequest.setFingerprints(fingerprints);
+    private void uploadFingerToServer(FingerprintRequest fingerprintRequest) {
 
         String jsonString = gson.toJson(fingerprintRequest);
         JsonObject jsonObject = new JsonParser().parse(jsonString).getAsJsonObject();
 
         final int chunkSize = 2048;
-        int count = 0;
 
+
+        apiInterface.addFingerResponse(jsonObject)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<FpInsertResponse>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        //Log.e("GithubDemo", d.toString());
+                    }
+
+                    @Override
+                    public void onNext(FpInsertResponse fpInsertResponse) {
+
+                        if (fpInsertResponse != null) {
+                            count++;
+                            Log.e("demo", "" + count);
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e("demo", e.getMessage());
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        Log.e("demo", "completed");
+
+                    }
+                });
+/*
         FPApiUtil.getInterface().addFingerResponse(jsonObject).enqueue(new Callback<FpInsertResponse>() {
             @Override
             public void onResponse(Call<FpInsertResponse> call, Response<FpInsertResponse> response) {
@@ -171,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+*/
 
 
     }

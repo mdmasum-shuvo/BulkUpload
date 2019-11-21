@@ -13,6 +13,7 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 import static com.masum.bulkupload.network.HttpParams.URL_FINGERPRINT_DATA;
@@ -25,7 +26,7 @@ public class FPApiUtil {
 
     public static String BASE_URL = "";
 
-    public static Void setUrl(String BASE_URL){
+    public static Void setUrl(String BASE_URL) {
         BASE_URL = BASE_URL;
         return null;
     }
@@ -39,6 +40,7 @@ public class FPApiUtil {
                     .baseUrl(URL_FINGERPRINT_DATA)
                     .client(getUnsafeOkHttpClient())
                     .addConverterFactory(GsonConverterFactory.create())
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .build();
         }
         return retrofit.create(ApiInterface.class);
@@ -85,8 +87,8 @@ public class FPApiUtil {
             });
 
             builder.connectTimeout(20, TimeUnit.SECONDS);
-            builder.readTimeout(20,TimeUnit.SECONDS);
-            builder.writeTimeout(20,TimeUnit.SECONDS);
+            builder.readTimeout(20, TimeUnit.SECONDS);
+            builder.writeTimeout(20, TimeUnit.SECONDS);
             builder.addInterceptor(logging);  // <-- this is the important line!
 
             return builder.build();
